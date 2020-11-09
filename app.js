@@ -64,7 +64,7 @@ function mainMenu() {
                 // 'Add Department',
                 // 'Update Employee Role',
                 // 'Update Employee Manager',
-                // 'View All Roles',
+                'View All Roles',
                 // 'Add Role',
                 // 'Remove Role
                 'Exit',
@@ -108,9 +108,9 @@ function mainMenu() {
                 //     updateManager();
                 //     break;
 
-                // case 'View All Roles':
-                //     viewAllRoles();
-                //     break;
+                case 'View All Roles':
+                    viewAllRoles();
+                    break;
 
                 // case 'Add Role':
                 //     addRole();
@@ -139,12 +139,9 @@ function viewEmp() {
     console.log(chalk.cyan('Here are all of your employees:'));
     console.log(chalk.cyan('-'.repeat(95)));
 
-    //TODO: Join all tables
-    //TODO: Console.table joined table
-    //TODO: Is query called anywhere or can it be removed?
-    let query = connection.query(
+    connection.query(
         `SELECT 
-        e.id AS 'ID',
+        e.id AS 'Employee ID',
         e.first_name AS 'First Name',
         e.last_name AS 'Last Name',
         departments.name AS 'Department',
@@ -173,9 +170,9 @@ function viewDept() {
     console.log(chalk.cyan('Your employees by department:'));
     console.log(chalk.cyan('-'.repeat(95)));
 
-    let query = connection.query(
+    connection.query(
         `SELECT 
-        e.id AS 'ID',
+        e.id AS 'Employee ID',
         e.first_name AS 'First Name',
         e.last_name AS 'Last Name',
         departments.name AS 'Department',
@@ -205,7 +202,7 @@ function viewRole() {
     console.log(chalk.cyan('Your employees by role:'));
     console.log(chalk.cyan('-'.repeat(95)));
 
-    let query = connection.query(
+    connection.query(
         `SELECT 
         e.id AS 'ID',
         e.first_name AS 'First Name',
@@ -234,12 +231,12 @@ function viewRole() {
 
 function viewManager() {
     console.log(chalk.cyan('-'.repeat(95)));
-    console.log(chalk.cyan('Your employees by role:'));
+    console.log(chalk.cyan('Your employees by manager:'));
     console.log(chalk.cyan('-'.repeat(95)));
 
-    let query = connection.query(
+    connection.query(
         `SELECT 
-        e.id AS 'ID',
+        e.id AS 'Employee ID',
         e.first_name AS 'First Name',
         e.last_name AS 'Last Name',
         departments.name AS 'Department',
@@ -264,9 +261,26 @@ function viewManager() {
     );
 }
 
-// function viewAllRoles() {
-
-// }
+function viewAllRoles() {
+    console.log(chalk.cyan('-'.repeat(95)));
+    console.log(chalk.cyan('Your currently available roles:'));
+    console.log(chalk.cyan('-'.repeat(95)));
+    connection.query(
+        `SELECT 
+        departments.name AS 'Department',
+        r.title AS 'Title'
+    FROM 
+        employees_db.roles AS r 
+            INNER JOIN 
+        departments ON (r.dept_id = departments.id)
+        ORDER BY departments.name;`,
+        function (err, res) {
+            if (err) throw err;
+            console.table(res);
+            mainMenu();
+        }
+    );
+}
 
 //* -------------------------------
 // * Add functions
