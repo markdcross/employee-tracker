@@ -57,14 +57,16 @@ function mainMenu() {
             choices: [
                 'View All Employees',
                 'View Employees by Department',
-                'View Employees by Title',
+                'View Employees by Role',
                 'View Employees by Manager',
-                'Add Employee',
+                // 'Add Employee',
                 // 'Remove Employee',
                 // 'Add Department',
-                // 'Add Role',
                 // 'Update Employee Role',
+                // 'Update Employee Manager',
                 // 'View All Roles',
+                // 'Add Role',
+                // 'Remove Role
                 'Exit',
             ],
         })
@@ -90,20 +92,32 @@ function mainMenu() {
                 //     addEmp();
                 //     break;
 
-                // case 'Add Department':
-                //     addDept();
+                // case 'Remove Employee':
+                //     removeEmp();
                 //     break;
 
-                // case 'Add Role':
-                //     addRole();
+                // case 'Add Department':
+                //     addDept();
                 //     break;
 
                 // case 'Update Employee Role':
                 //     updateRole();
                 //     break;
 
+                // case 'Update Employee Manager':
+                //     updateManager();
+                //     break;
+
                 // case 'View All Roles':
                 //     viewAllRoles();
+                //     break;
+
+                // case 'Add Role':
+                //     addRole();
+                //     break;
+
+                // case 'Remove Role':
+                //     removeRoles();
                 //     break;
 
                 case 'Exit':
@@ -113,6 +127,8 @@ function mainMenu() {
         });
 }
 
+//TODO: What can be functionized in a separate file?
+//TODO: Update to arrow functions?
 //* -------------------------------
 // * View functions
 //* -------------------------------
@@ -216,7 +232,39 @@ function viewRole() {
     );
 }
 
-// function viewManager() {
+function viewManager() {
+    console.log(chalk.cyan('-'.repeat(95)));
+    console.log(chalk.cyan('Your employees by role:'));
+    console.log(chalk.cyan('-'.repeat(95)));
+
+    let query = connection.query(
+        `SELECT 
+        e.id AS 'ID',
+        e.first_name AS 'First Name',
+        e.last_name AS 'Last Name',
+        departments.name AS 'Department',
+		roles.title AS 'Title',
+		roles.salary AS 'Salary',
+
+		CONCAT(m.first_name, ' ', m.last_name) AS Manager
+	FROM
+		employees_db.employees AS e
+			INNER JOIN
+		roles ON (e.role_id = roles.id)
+			INNER JOIN
+		departments ON (roles.dept_id = departments.id)
+			LEFT JOIN
+        employees_db.employees m ON e.manager_id = m.id
+        ORDER BY e.manager_id;`,
+        function (err, res) {
+            if (err) throw err;
+            console.table(res);
+            mainMenu();
+        }
+    );
+}
+
+// function viewAllRoles() {
 
 // }
 
@@ -234,4 +282,11 @@ function viewRole() {
 //* -------------------------------
 // function updateRole() {}
 
-//TODO: what can be functionized in a separate file?
+// function updateManager() {}
+
+//* -------------------------------
+// * Remove functions
+//* -------------------------------
+// function removeEmp() {}
+
+// function removeRoles() {}
