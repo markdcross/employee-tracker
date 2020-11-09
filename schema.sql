@@ -29,3 +29,4 @@ CREATE TABLE employees (
     manager_id INT NULL DEFAULT 0,
     PRIMARY KEY (id)
 );
++

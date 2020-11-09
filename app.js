@@ -65,7 +65,7 @@ function mainMenu() {
                 // 'Update Employee Role',
                 // 'Update Employee Manager',
                 'View All Roles',
-                // 'Add Role',
+                'Add Role',
                 // 'Remove Role
                 'Exit',
             ],
@@ -112,9 +112,9 @@ function mainMenu() {
                     viewAllRoles();
                     break;
 
-                // case 'Add Role':
-                //     addRole();
-                //     break;
+                case 'Add Role':
+                    addRole();
+                    break;
 
                 // case 'Remove Role':
                 //     removeRoles();
@@ -317,7 +317,60 @@ function addDept() {
         });
 }
 
-// function addRole() {}
+function addRole() {
+    connection.query('SELECT * FROM departments', function (err, results) {
+        if (err) throw err;
+        inquirer
+            .prompt([
+                {
+                    name: 'newRole',
+                    type: 'input',
+                    message: 'Please enter the title of the new role',
+                    validate: function (value) {
+                        if (!value) {
+                            console.log('Please enter a name for the role.');
+                            return false;
+                        }
+                        return true;
+                    },
+                },
+                {
+                    name: 'newRoleDept',
+                    type: 'list',
+                    message: 'In which department does this role reside?',
+                    choices: function () {
+                        let deptArr = [];
+                        for (var i = 0; i < results.length; i++) {
+                            deptArr.push(results[i].name);
+                        }
+                        return deptArr;
+                    },
+                },
+            ])
+            .then(function (response) {
+                const newRole = response.newRole;
+                const newRoleDept = response.newRoleDept;
+                connection.query(
+                    `SELECT id FROM departments WHERE name = '${newRoleDept}'`,
+                    function (err, res) {
+                        if (err) throw err;
+                        connection.query(
+                            'INSERT INTO roles SET ?',
+                            {
+                                title: newRole,
+                                dept_id: res[0].id,
+                            },
+                            function (err, res) {
+                                if (err) throw err;
+                                console.log('Role added successfully');
+                                mainMenu();
+                            }
+                        );
+                    }
+                );
+            });
+    });
+}
 
 //* -------------------------------
 // * Update functions
