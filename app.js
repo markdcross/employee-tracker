@@ -134,11 +134,6 @@ function mainMenu() {
 //* -------------------------------
 
 function viewEmp() {
-    console.log(chalk.cyan('-'.repeat(95)));
-
-    console.log(chalk.cyan('Here are all of your employees:'));
-    console.log(chalk.cyan('-'.repeat(95)));
-
     connection.query(
         `SELECT 
         e.id AS 'Employee ID',
@@ -166,10 +161,6 @@ function viewEmp() {
 }
 
 function viewDept() {
-    console.log(chalk.cyan('-'.repeat(95)));
-    console.log(chalk.cyan('Your employees by department:'));
-    console.log(chalk.cyan('-'.repeat(95)));
-
     connection.query(
         `SELECT 
         e.id AS 'Employee ID',
@@ -198,10 +189,6 @@ function viewDept() {
 }
 
 function viewRole() {
-    console.log(chalk.cyan('-'.repeat(95)));
-    console.log(chalk.cyan('Your employees by role:'));
-    console.log(chalk.cyan('-'.repeat(95)));
-
     connection.query(
         `SELECT 
         e.id AS 'ID',
@@ -230,10 +217,6 @@ function viewRole() {
 }
 
 function viewManager() {
-    console.log(chalk.cyan('-'.repeat(95)));
-    console.log(chalk.cyan('Your employees by manager:'));
-    console.log(chalk.cyan('-'.repeat(95)));
-
     connection.query(
         `SELECT 
         e.id AS 'Employee ID',
@@ -262,9 +245,6 @@ function viewManager() {
 }
 
 function viewAllRoles() {
-    console.log(chalk.cyan('-'.repeat(95)));
-    console.log(chalk.cyan('Your currently available roles:'));
-    console.log(chalk.cyan('-'.repeat(95)));
     connection.query(
         `SELECT 
         departments.name AS 'Department',
@@ -295,7 +275,7 @@ function addDept() {
             message: 'Please enter the name of the new department',
             validate: function (value) {
                 if (!value) {
-                    console.log('Please enter a name for the department.');
+                    console.log(chalk.cyan('Please enter a name for the department.'));
                     return false;
                 }
                 return true;
@@ -310,7 +290,7 @@ function addDept() {
                 },
                 function (err, res) {
                     if (err) throw err;
-                    console.log('Department added successfully');
+                    console.log(chalk.cyan('Department added successfully'));
                     mainMenu();
                 }
             );
@@ -328,7 +308,7 @@ function addRole() {
                     message: 'Please enter the title of the new role',
                     validate: function (value) {
                         if (!value) {
-                            console.log('Please enter a name for the role.');
+                            console.log(chalk.cyan('Please enter a name for the role.'));
                             return false;
                         }
                         return true;
@@ -362,7 +342,7 @@ function addRole() {
                             },
                             function (err, res) {
                                 if (err) throw err;
-                                console.log('Role added successfully');
+                                console.log(chalk.cyan('Role added successfully'));
                                 mainMenu();
                             }
                         );
