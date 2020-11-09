@@ -61,7 +61,7 @@ function mainMenu() {
                 'View Employees by Manager',
                 // 'Add Employee',
                 // 'Remove Employee',
-                // 'Add Department',
+                'Add Department',
                 // 'Update Employee Role',
                 // 'Update Employee Manager',
                 'View All Roles',
@@ -96,9 +96,9 @@ function mainMenu() {
                 //     removeEmp();
                 //     break;
 
-                // case 'Add Department':
-                //     addDept();
-                //     break;
+                case 'Add Department':
+                    addDept();
+                    break;
 
                 // case 'Update Employee Role':
                 //     updateRole();
@@ -287,7 +287,35 @@ function viewAllRoles() {
 //* -------------------------------
 // function addEmp() {}
 
-// function addDept() {}
+function addDept() {
+    inquirer
+        .prompt({
+            name: 'newDept',
+            type: 'input',
+            message: 'Please enter the name of the new department',
+            validate: function (value) {
+                if (!value) {
+                    console.log('Please enter a name for the department.');
+                    return false;
+                }
+                return true;
+            },
+        })
+        .then(function (response) {
+            const newDept = response.newDept;
+            connection.query(
+                'INSERT INTO departments SET ?',
+                {
+                    name: newDept,
+                },
+                function (err, res) {
+                    if (err) throw err;
+                    console.log('Department added successfully');
+                    mainMenu();
+                }
+            );
+        });
+}
 
 // function addRole() {}
 
