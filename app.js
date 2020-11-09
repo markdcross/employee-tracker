@@ -57,11 +57,14 @@ function mainMenu() {
             choices: [
                 'View All Employees',
                 'View Employees by Department',
-                'View Employees by Role',
+                'View Employees by Title',
+                'View Employees by Manager',
                 'Add Employee',
-                'Add Department',
-                'Add Role',
-                'Update Employee Role',
+                // 'Remove Employee',
+                // 'Add Department',
+                // 'Add Role',
+                // 'Update Employee Role',
+                // 'View All Roles',
                 'Exit',
             ],
         })
@@ -75,9 +78,13 @@ function mainMenu() {
                     viewDept();
                     break;
 
-                // case 'View Employees by Role':
-                //     viewRole();
-                //     break;
+                case 'View Employees by Role':
+                    viewRole();
+                    break;
+
+                case 'View Employees by Manager':
+                    viewManager();
+                    break;
 
                 // case 'Add Employee':
                 //     addEmp();
@@ -93,6 +100,10 @@ function mainMenu() {
 
                 // case 'Update Employee Role':
                 //     updateRole();
+                //     break;
+
+                // case 'View All Roles':
+                //     viewAllRoles();
                 //     break;
 
                 case 'Exit':
@@ -173,10 +184,40 @@ function viewDept() {
     );
 }
 
-// function viewRole() {
-//     //TODO: Inquirer - ask for role to view
-//     //TODO: Search for user input (sql query with '?')
-//     //TODO: Join tables with respect to input
+function viewRole() {
+    console.log(chalk.cyan('-'.repeat(95)));
+    console.log(chalk.cyan('Your employees by role:'));
+    console.log(chalk.cyan('-'.repeat(95)));
+
+    let query = connection.query(
+        `SELECT 
+        e.id AS 'ID',
+        e.first_name AS 'First Name',
+        e.last_name AS 'Last Name',
+        departments.name AS 'Department',
+		roles.title AS 'Title',
+		roles.salary AS 'Salary',
+
+		CONCAT(m.first_name, ' ', m.last_name) AS Manager
+	FROM
+		employees_db.employees AS e
+			INNER JOIN
+		roles ON (e.role_id = roles.id)
+			INNER JOIN
+		departments ON (roles.dept_id = departments.id)
+			LEFT JOIN
+        employees_db.employees m ON e.manager_id = m.id
+        ORDER BY roles.title;`,
+        function (err, res) {
+            if (err) throw err;
+            console.table(res);
+            mainMenu();
+        }
+    );
+}
+
+// function viewManager() {
+
 // }
 
 //* -------------------------------
