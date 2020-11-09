@@ -71,9 +71,9 @@ function mainMenu() {
                     viewEmp();
                     break;
 
-                // case 'View Employees by Department':
-                //     viewDept();
-                //     break;
+                case 'View Employees by Department':
+                    viewDept();
+                    break;
 
                 // case 'View Employees by Role':
                 //     viewRole();
@@ -114,7 +114,7 @@ function viewEmp() {
 
     //TODO: Join all tables
     //TODO: Console.table joined table
-    //TODO: Is query called anywhere or can it be removed? 
+    //TODO: Is query called anywhere or can it be removed?
     let query = connection.query(
         `SELECT 
         e.id AS 'ID',
@@ -141,11 +141,37 @@ function viewEmp() {
     );
 }
 
-// function viewDept() {
-//     //TODO: Inquirer - ask for department to view
-//     //TODO: Search for user input (sql query with '?')
-//     //TODO: Join tables with respect to input
-// }
+function viewDept() {
+    console.log(chalk.cyan('-'.repeat(95)));
+    console.log(chalk.cyan('Your employees by department:'));
+    console.log(chalk.cyan('-'.repeat(95)));
+
+    let query = connection.query(
+        `SELECT 
+        e.id AS 'ID',
+        e.first_name AS 'First Name',
+        e.last_name AS 'Last Name',
+        departments.name AS 'Department',
+		roles.title AS 'Title',
+		roles.salary AS 'Salary',
+
+		CONCAT(m.first_name, ' ', m.last_name) AS Manager
+	FROM
+		employees_db.employees AS e
+			INNER JOIN
+		roles ON (e.role_id = roles.id)
+			INNER JOIN
+		departments ON (roles.dept_id = departments.id)
+			LEFT JOIN
+        employees_db.employees m ON e.manager_id = m.id
+        ORDER BY departments.name;`,
+        function (err, res) {
+            if (err) throw err;
+            console.table(res);
+            mainMenu();
+        }
+    );
+}
 
 // function viewRole() {
 //     //TODO: Inquirer - ask for role to view
@@ -153,18 +179,18 @@ function viewEmp() {
 //     //TODO: Join tables with respect to input
 // }
 
-// //* -------------------------------
-// // * Add functions
-// //* -------------------------------
+//* -------------------------------
+// * Add functions
+//* -------------------------------
 // function addEmp() {}
 
 // function addDept() {}
 
 // function addRole() {}
 
-// //* -------------------------------
-// // * Update functions
-// //* -------------------------------
+//* -------------------------------
+// * Update functions
+//* -------------------------------
 // function updateRole() {}
 
 //TODO: what can be functionized in a separate file?
