@@ -301,12 +301,13 @@ const addEmp = () => {
             const newEmpLast = response.newEmpLast;
             const newEmpRole = response.newEmpRole;
 
-            const empRole = await query(
-                `SELECT id FROM roles WHERE title = '${newEmpRole}'`
-            );
+            const empRole = await query(`SELECT id FROM roles WHERE ?`, {
+                title: newEmpRole,
+            });
 
             const empMgrID = await query(
-                `SELECT id FROM employees WHERE first_name = '${mgrfirst}' AND last_name = '${mgrlast}'`
+                'SELECT id FROM employees WHERE ? AND ?',
+                [{ first_name: mgrfirst }, { last_name: mgrlast }]
             );
 
             await query('INSERT INTO employees set ?', {
@@ -318,37 +319,6 @@ const addEmp = () => {
 
             console.log(chalk.cyan('Employee successfully added'));
             mainMenu();
-
-            // connection.query(
-            //     `SELECT id FROM roles WHERE title = '${newEmpRole}'`,
-            //     function (err, title) {
-            //         if (err) throw err;
-            //         connection.query(
-            //             `SELECT id FROM employees WHERE first_name = '${mgrfirst}' AND last_name = '${mgrlast}'`,
-            //             function (err, manager) {
-            //                 if (err) throw err;
-            //                 connection.query(
-            //                     'INSERT INTO employees set ?',
-            //                     {
-            //                         first_name: newEmpFirst,
-            //                         last_name: newEmpLast,
-            //                         role_id: title[0].id,
-            //                         manager_id: manager[0].id,
-            //                     },
-            //                     function (err, res) {
-            //                         if (err) throw err;
-            //                         console.log(
-            //                             chalk.cyan(
-            //                                 'Employee successfully added'
-            //                             )
-            //                         );
-            //                         mainMenu();
-            //                     }
-            //                 );
-            //             }
-            //         );
-            //     }
-            // );
         });
 };
 
@@ -424,9 +394,9 @@ const addRole = () => {
             const newRole = response.newRole;
             const newRoleDept = response.newRoleDept;
 
-            const roleID = await query(
-                `SELECT id FROM departments WHERE name = '${newRoleDept}'`
-            );
+            const roleID = await query('SELECT id FROM departments WHERE ?', {
+                name: newRoleDept,
+            });
 
             await query('INSERT INTO roles SET ?', {
                 title: newRole,
@@ -466,12 +436,13 @@ const updateRole = () => {
             const newRole = response.role;
 
             //TODO: Get role_id from role table
-            const updatedRole = await query(
-                `SELECT id FROM roles WHERE title = '${newRole}'`
-            );
+            const updatedRole = await query('SELECT id FROM roles WHERE ?', {
+                title: newRole,
+            });
 
             const empID = await query(
-                `SELECT id FROM employees WHERE first_name = '${empfirst}' AND last_name = '${emplast}'`
+                'SELECT id FROM employees WHERE ? AND ?',
+                [{ first_name: empfirst }, { last_name: emplast }]
             );
 
             await query('UPDATE employees SET ? WHERE ?', [
