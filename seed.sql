@@ -6,7 +6,7 @@ VALUES ("Sales"), ("Service"), ("Tech");
 INSERT INTO roles (title, salary, dept_id)
 VALUES 
 ("SDR", 35000, 1), 
-("AE", 75000, 1), 
+("Account Executive", 75000, 1), 
 ("Customer Service", 45000, 2),
 ("Junior Dev", 55000, 3), 
 ("CTO", 275000, 3), 
