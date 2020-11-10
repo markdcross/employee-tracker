@@ -414,14 +414,12 @@ const addRole = () => {
 const updateRole = () => {
     inquirer
         .prompt([
-            //TODO: Ask who they want to update
             {
                 name: 'employee',
                 type: 'list',
                 message: 'Whose role would you like to update?',
                 choices: () => listEmps(),
             },
-            //TODO: Ask what the new role should be
             {
                 name: 'role',
                 type: 'list',
@@ -435,7 +433,6 @@ const updateRole = () => {
             const emplast = empArr[1];
             const newRole = response.role;
 
-            //TODO: Get role_id from role table
             const updatedRole = await query('SELECT id FROM roles WHERE ?', {
                 title: newRole,
             });
