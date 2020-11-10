@@ -23,7 +23,7 @@ connection.connect(function (err) {
 
 const query = util.promisify(connection.query).bind(connection);
 
-function welcome() {
+const welcome = () => {
     figlet.text(
         'Employee Tracker',
         {
@@ -44,13 +44,13 @@ function welcome() {
             mainMenu();
         }
     );
-}
+};
 
 //* -------------------------------
 // * Main Menu
 //* -------------------------------
 
-function mainMenu() {
+const mainMenu = () => {
     inquirer
         .prompt({
             name: 'menu',
@@ -65,7 +65,7 @@ function mainMenu() {
                 'Add Employee',
                 // 'Remove Employee',
                 'Add Department',
-                // 'Update Employee Role',
+                'Update Employee Role',
                 // 'Update Employee Manager',
                 'View All Roles',
                 'Add Role',
@@ -103,9 +103,9 @@ function mainMenu() {
                     addDept();
                     break;
 
-                // case 'Update Employee Role':
-                //     updateRole();
-                //     break;
+                case 'Update Employee Role':
+                    updateRole();
+                    break;
 
                 // case 'Update Employee Manager':
                 //     updateManager();
@@ -128,16 +128,16 @@ function mainMenu() {
                     break;
             }
         });
-}
+};
 
-//TODO: What can be functionized in a separate file?
-//TODO: Update to arrow functions?
+//TODO: What can be organized in a separate file?
+
 //* -------------------------------
 // * View functions
 //* -------------------------------
 
-function viewEmp() {
-    connection.query(
+const viewEmp = async () => {
+    const empTable = await query(
         `SELECT 
         e.id AS 'Employee ID',
         e.first_name AS 'First Name',
@@ -154,17 +154,14 @@ function viewEmp() {
 			INNER JOIN
 		departments ON (roles.dept_id = departments.id)
 			LEFT JOIN
-		employees_db.employees m ON e.manager_id = m.id;`,
-        function (err, res) {
-            if (err) throw err;
-            console.table(res);
-            mainMenu();
-        }
+		employees_db.employees m ON e.manager_id = m.id;`
     );
-}
+    console.table(empTable);
+    mainMenu();
+};
 
-function viewDept() {
-    connection.query(
+const viewDept = async () => {
+    const empDeptTable = await query(
         `SELECT 
         e.id AS 'Employee ID',
         e.first_name AS 'First Name',
@@ -182,17 +179,14 @@ function viewDept() {
 		departments ON (roles.dept_id = departments.id)
 			LEFT JOIN
         employees_db.employees m ON e.manager_id = m.id
-        ORDER BY departments.name;`,
-        function (err, res) {
-            if (err) throw err;
-            console.table(res);
-            mainMenu();
-        }
+        ORDER BY departments.name;`
     );
-}
+    console.table(empDeptTable);
+    mainMenu();
+};
 
-function viewRole() {
-    connection.query(
+const viewRole = async () => {
+    const empRoleTable = await query(
         `SELECT 
         e.id AS 'ID',
         e.first_name AS 'First Name',
@@ -210,17 +204,14 @@ function viewRole() {
 		departments ON (roles.dept_id = departments.id)
 			LEFT JOIN
         employees_db.employees m ON e.manager_id = m.id
-        ORDER BY roles.title;`,
-        function (err, res) {
-            if (err) throw err;
-            console.table(res);
-            mainMenu();
-        }
+        ORDER BY roles.title;`
     );
-}
+    console.table(empRoleTable);
+    mainMenu();
+};
 
-function viewManager() {
-    connection.query(
+const viewManager = async () => {
+    const mgrTable = await query(
         `SELECT 
         e.id AS 'Employee ID',
         e.first_name AS 'First Name',
@@ -238,17 +229,14 @@ function viewManager() {
 		departments ON (roles.dept_id = departments.id)
 			LEFT JOIN
         employees_db.employees m ON e.manager_id = m.id
-        ORDER BY e.manager_id;`,
-        function (err, res) {
-            if (err) throw err;
-            console.table(res);
-            mainMenu();
-        }
+        ORDER BY e.manager_id;`
     );
-}
+    console.table(mgrTable);
+    mainMenu();
+};
 
-function viewAllRoles() {
-    connection.query(
+const viewAllRoles = async () => {
+    const roleTable = await query(
         `SELECT 
         departments.name AS 'Department',
         r.title AS 'Title'
@@ -256,19 +244,16 @@ function viewAllRoles() {
         employees_db.roles AS r 
             INNER JOIN 
         departments ON (r.dept_id = departments.id)
-        ORDER BY departments.name;`,
-        function (err, res) {
-            if (err) throw err;
-            console.table(res);
-            mainMenu();
-        }
+        ORDER BY departments.name;`
     );
-}
+    console.table(roleTable);
+    mainMenu();
+};
 
 //* -------------------------------
 // * Add functions
 //* -------------------------------
-function addEmp() {
+const addEmp = () => {
     inquirer
         .prompt([
             {
@@ -299,16 +284,16 @@ function addEmp() {
                 name: 'newEmpRole',
                 type: 'list',
                 message: 'What is this employees title?',
-                choices: listTitles(),
+                choices: () => listTitles(),
             },
             {
                 name: 'newEmpMgr',
                 type: 'list',
                 message: 'Who is this employees manager?',
-                choices: () => listManagers(),
+                choices: () => listEmps(),
             },
         ])
-        .then(function (response) {
+        .then(async function (response) {
             const mgrArr = response.newEmpMgr.split(' ');
             const mgrfirst = mgrArr[0];
             const mgrlast = mgrArr[1];
@@ -316,40 +301,58 @@ function addEmp() {
             const newEmpLast = response.newEmpLast;
             const newEmpRole = response.newEmpRole;
 
-            connection.query(
-                `SELECT id FROM roles WHERE title = '${newEmpRole}'`,
-                function (err, title) {
-                    if (err) throw err;
-                    connection.query(
-                        `SELECT id FROM employees WHERE first_name = '${mgrfirst}' AND last_name = '${mgrlast}'`,
-                        function (err, manager) {
-                            if (err) throw err;
-                            connection.query(
-                                'INSERT INTO employees set ?',
-                                {
-                                    first_name: newEmpFirst,
-                                    last_name: newEmpLast,
-                                    role_id: title[0].id,
-                                    manager_id: manager[0].id,
-                                },
-                                function (err, res) {
-                                    if (err) throw err;
-                                    console.log(
-                                        chalk.cyan(
-                                            'Employee successfully added'
-                                        )
-                                    );
-                                    mainMenu();
-                                }
-                            );
-                        }
-                    );
-                }
+            const empRole = await query(
+                `SELECT id FROM roles WHERE title = '${newEmpRole}'`
             );
-        });
-}
 
-function addDept() {
+            const empMgrID = await query(
+                `SELECT id FROM employees WHERE first_name = '${mgrfirst}' AND last_name = '${mgrlast}'`
+            );
+
+            await query('INSERT INTO employees set ?', {
+                first_name: newEmpFirst,
+                last_name: newEmpLast,
+                role_id: empRole[0].id,
+                manager_id: empMgrID[0].id,
+            });
+
+            console.log(chalk.cyan('Employee successfully added'));
+            mainMenu();
+
+            // connection.query(
+            //     `SELECT id FROM roles WHERE title = '${newEmpRole}'`,
+            //     function (err, title) {
+            //         if (err) throw err;
+            //         connection.query(
+            //             `SELECT id FROM employees WHERE first_name = '${mgrfirst}' AND last_name = '${mgrlast}'`,
+            //             function (err, manager) {
+            //                 if (err) throw err;
+            //                 connection.query(
+            //                     'INSERT INTO employees set ?',
+            //                     {
+            //                         first_name: newEmpFirst,
+            //                         last_name: newEmpLast,
+            //                         role_id: title[0].id,
+            //                         manager_id: manager[0].id,
+            //                     },
+            //                     function (err, res) {
+            //                         if (err) throw err;
+            //                         console.log(
+            //                             chalk.cyan(
+            //                                 'Employee successfully added'
+            //                             )
+            //                         );
+            //                         mainMenu();
+            //                     }
+            //                 );
+            //             }
+            //         );
+            //     }
+            // );
+        });
+};
+
+const addDept = () => {
     inquirer
         .prompt({
             name: 'newDept',
@@ -365,23 +368,19 @@ function addDept() {
                 return true;
             },
         })
-        .then(function (response) {
+        .then(async function (response) {
             const newDept = response.newDept;
-            connection.query(
-                'INSERT INTO departments SET ?',
-                {
-                    name: newDept,
-                },
-                function (err, res) {
-                    if (err) throw err;
-                    console.log(chalk.cyan('Department added successfully'));
-                    mainMenu();
-                }
-            );
-        });
-}
 
-function addRole() {
+            await query('INSERT INTO departments SET ?', {
+                name: newDept,
+            });
+
+            console.log(chalk.cyan('Department added successfully'));
+            mainMenu();
+        });
+};
+
+const addRole = () => {
     inquirer
         .prompt([
             {
@@ -402,7 +401,7 @@ function addRole() {
                 name: 'newRoleDept',
                 type: 'list',
                 message: 'To which department does this role report?',
-                choices: listDepts(),
+                choices: () => listDepts(),
             },
             {
                 name: 'newRoleSalary',
@@ -436,34 +435,37 @@ function addRole() {
 
             console.log(chalk.cyan('Role added successfully'));
             mainMenu();
-
-            // connection.query(
-            //     `SELECT id FROM departments WHERE name = '${newRoleDept}'`,
-            //     function (err, res) {
-            //         if (err) throw err;
-            //         connection.query(
-            //             'INSERT INTO roles SET ?',
-            //             {
-            //                 title: newRole,
-            //                 dept_id: res[0].id,
-            //             },
-            //             function (err, res) {
-            //                 if (err) throw err;
-            //                 console.log(chalk.cyan('Role added successfully'));
-            //                 mainMenu();
-            //             }
-            //         );
-            //     }
-            // );
         });
-}
+};
 
 //* -------------------------------
 // * Update functions
 //* -------------------------------
-// function updateRole() {
-
-// }
+const updateRole = () => {
+    inquirer
+        .prompt([
+//TODO: Ask who they want to update
+            {
+                name: 'empNameRoleUpdate',
+                type: 'list',
+                message: 'Whose role would you like to update?',
+                choices: () => listEmps(),
+            },
+//TODO: Ask what the new role should be
+            {
+                name: 'newRole',
+                type: 'list',
+                message: 'What is this employees title?',
+                choices: () => listTitles(),
+            },
+//TODO: Get role_id f  
+        ])
+        .then(async function (response) {
+            const empArr = response.empRole.split(' ');
+            const empfirst = empArr[0];
+            const emplast = empArr[1];
+        })
+}
 
 // function updateManager() {}
 
@@ -477,33 +479,30 @@ function addRole() {
 //* -------------------------------
 // * Helper functions
 //* -------------------------------
-const listManagers = async () => {
-    let managers;
-    managers = await query('SELECT * FROM employees');
-    const empName = managers.map((employee) => {
+const listEmps = async () => {
+    let employees;
+    employees = await query('SELECT * FROM employees');
+    const empName = employees.map((employee) => {
         return `${employee.first_name} ${employee.last_name}`;
     });
     return empName;
 };
 
-function listDepts() {
-    let deptArr = [];
-    connection.query('SELECT * FROM departments', function (err, results) {
-        if (err) throw err;
-        for (var i = 0; i < results.length; i++) {
-            deptArr.push(results[i].name);
-        }
+const listDepts = async () => {
+    let deptArr;
+    deptArr = await query('SELECT * FROM departments');
+    const deptList = deptArr.map((department) => {
+        return `${department.name}`;
     });
-    return deptArr;
-}
+    return deptList;
+};
 
-function listTitles() {
-    let titleArr = [];
-    connection.query('SELECT * FROM roles', function (err, results) {
-        if (err) throw err;
-        for (var i = 0; i < results.length; i++) {
-            titleArr.push(results[i].title);
-        }
+const listTitles = async () => {
+    let titleArr;
+    titleArr = await query('SELECT * FROM roles');
+    const titleList = titleArr.map((position) => {
+        return `${position.title}`;
     });
-    return titleArr;
-}
+    return titleList;
+};
+
