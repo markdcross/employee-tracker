@@ -444,28 +444,49 @@ const addRole = () => {
 const updateRole = () => {
     inquirer
         .prompt([
-//TODO: Ask who they want to update
+            //TODO: Ask who they want to update
             {
-                name: 'empNameRoleUpdate',
+                name: 'employee',
                 type: 'list',
                 message: 'Whose role would you like to update?',
                 choices: () => listEmps(),
             },
-//TODO: Ask what the new role should be
+            //TODO: Ask what the new role should be
             {
-                name: 'newRole',
+                name: 'role',
                 type: 'list',
-                message: 'What is this employees title?',
+                message: 'What is this employees new title?',
                 choices: () => listTitles(),
             },
-//TODO: Get role_id f  
         ])
         .then(async function (response) {
-            const empArr = response.empRole.split(' ');
+            const empArr = response.employee.split(' ');
             const empfirst = empArr[0];
             const emplast = empArr[1];
-        })
-}
+            const newRole = response.role;
+
+            //TODO: Get role_id from role table
+            const updatedRole = await query(
+                `SELECT id FROM roles WHERE title = '${newRole}'`
+            );
+
+            const empID = await query(
+                `SELECT id FROM employees WHERE first_name = '${empfirst}' AND last_name = '${emplast}'`
+            );
+
+            await query('UPDATE employees SET ? WHERE ?', [
+                {
+                    role_id: updatedRole[0].id,
+                },
+                {
+                    id: empID[0].id,
+                },
+            ]);
+
+            console.log(chalk.cyan('Role updated successfully'));
+            mainMenu();
+        });
+};
 
 // function updateManager() {}
 
@@ -505,4 +526,3 @@ const listTitles = async () => {
     });
     return titleList;
 };
-
