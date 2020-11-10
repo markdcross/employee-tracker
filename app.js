@@ -6,6 +6,7 @@ const mysql = require('mysql');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const conTable = require('console.table');
+const util = require('util');
 
 var connection = mysql.createConnection({
     host: 'localhost',
@@ -19,6 +20,8 @@ connection.connect(function (err) {
     if (err) throw err;
     welcome();
 });
+
+const query = util.promisify(connection.query).bind(connection);
 
 function welcome() {
     figlet.text(
@@ -59,7 +62,7 @@ function mainMenu() {
                 'View Employees by Department',
                 'View Employees by Role',
                 'View Employees by Manager',
-                // 'Add Employee',
+                'Add Employee',
                 // 'Remove Employee',
                 'Add Department',
                 // 'Update Employee Role',
@@ -88,9 +91,9 @@ function mainMenu() {
                     viewManager();
                     break;
 
-                // case 'Add Employee':
-                //     addEmp();
-                //     break;
+                case 'Add Employee':
+                    addEmp();
+                    break;
 
                 // case 'Remove Employee':
                 //     removeEmp();
@@ -265,7 +268,86 @@ function viewAllRoles() {
 //* -------------------------------
 // * Add functions
 //* -------------------------------
-// function addEmp() {}
+function addEmp() {
+    inquirer
+        .prompt([
+            {
+                name: 'newEmpFirst',
+                type: 'input',
+                message: 'Please enter the first name of the employee',
+                validate: function (value) {
+                    if (!value) {
+                        console.log(chalk.cyan('Please enter a name.'));
+                        return false;
+                    }
+                    return true;
+                },
+            },
+            {
+                name: 'newEmpLast',
+                type: 'input',
+                message: 'Please enter the last name of the employee',
+                validate: function (value) {
+                    if (!value) {
+                        console.log(chalk.cyan('Please enter a name.'));
+                        return false;
+                    }
+                    return true;
+                },
+            },
+            {
+                name: 'newEmpRole',
+                type: 'list',
+                message: 'What is this employees title?',
+                choices: listTitles(),
+            },
+            {
+                name: 'newEmpMgr',
+                type: 'list',
+                message: 'Who is this employees manager?',
+                choices: () => listManagers(),
+            },
+        ])
+        .then(function (response) {
+            const mgrArr = response.newEmpMgr.split(' ');
+            const mgrfirst = mgrArr[0];
+            const mgrlast = mgrArr[1];
+            const newEmpFirst = response.newEmpFirst;
+            const newEmpLast = response.newEmpLast;
+            const newEmpRole = response.newEmpRole;
+
+            connection.query(
+                `SELECT id FROM roles WHERE title = '${newEmpRole}'`,
+                function (err, title) {
+                    if (err) throw err;
+                    connection.query(
+                        `SELECT id FROM employees WHERE first_name = '${mgrfirst}' AND last_name = '${mgrlast}'`,
+                        function (err, manager) {
+                            if (err) throw err;
+                            connection.query(
+                                'INSERT INTO employees set ?',
+                                {
+                                    first_name: newEmpFirst,
+                                    last_name: newEmpLast,
+                                    role_id: title[0].id,
+                                    manager_id: manager[0].id,
+                                },
+                                function (err, res) {
+                                    if (err) throw err;
+                                    console.log(
+                                        chalk.cyan(
+                                            'Employee successfully added'
+                                        )
+                                    );
+                                    mainMenu();
+                                }
+                            );
+                        }
+                    );
+                }
+            );
+        });
+}
 
 function addDept() {
     inquirer
@@ -275,7 +357,9 @@ function addDept() {
             message: 'Please enter the name of the new department',
             validate: function (value) {
                 if (!value) {
-                    console.log(chalk.cyan('Please enter a name for the department.'));
+                    console.log(
+                        chalk.cyan('Please enter a name for the department.')
+                    );
                     return false;
                 }
                 return true;
@@ -298,64 +382,88 @@ function addDept() {
 }
 
 function addRole() {
-    connection.query('SELECT * FROM departments', function (err, results) {
-        if (err) throw err;
-        inquirer
-            .prompt([
-                {
-                    name: 'newRole',
-                    type: 'input',
-                    message: 'Please enter the title of the new role',
-                    validate: function (value) {
-                        if (!value) {
-                            console.log(chalk.cyan('Please enter a name for the role.'));
-                            return false;
-                        }
-                        return true;
-                    },
-                },
-                {
-                    name: 'newRoleDept',
-                    type: 'list',
-                    message: 'In which department does this role reside?',
-                    choices: function () {
-                        let deptArr = [];
-                        for (var i = 0; i < results.length; i++) {
-                            deptArr.push(results[i].name);
-                        }
-                        return deptArr;
-                    },
-                },
-            ])
-            .then(function (response) {
-                const newRole = response.newRole;
-                const newRoleDept = response.newRoleDept;
-                connection.query(
-                    `SELECT id FROM departments WHERE name = '${newRoleDept}'`,
-                    function (err, res) {
-                        if (err) throw err;
-                        connection.query(
-                            'INSERT INTO roles SET ?',
-                            {
-                                title: newRole,
-                                dept_id: res[0].id,
-                            },
-                            function (err, res) {
-                                if (err) throw err;
-                                console.log(chalk.cyan('Role added successfully'));
-                                mainMenu();
-                            }
+    inquirer
+        .prompt([
+            {
+                name: 'newRole',
+                type: 'input',
+                message: 'Please enter the title of the new role',
+                validate: function (value) {
+                    if (!value) {
+                        console.log(
+                            chalk.cyan('Please enter a name for the role.')
                         );
+                        return false;
                     }
-                );
+                    return true;
+                },
+            },
+            {
+                name: 'newRoleDept',
+                type: 'list',
+                message: 'To which department does this role report?',
+                choices: listDepts(),
+            },
+            {
+                name: 'newRoleSalary',
+                type: 'input',
+                message: 'Please provide a starting salary for this position.',
+                validate: function (value) {
+                    if (!value || !value.match(/^\d+/)) {
+                        console.log(
+                            chalk.cyan(
+                                'Please enter a valid salary for the role.'
+                            )
+                        );
+                        return false;
+                    }
+                    return true;
+                },
+            },
+        ])
+        .then(async function (response) {
+            const newRole = response.newRole;
+            const newRoleDept = response.newRoleDept;
+
+            const roleID = await query(
+                `SELECT id FROM departments WHERE name = '${newRoleDept}'`
+            );
+
+            await query('INSERT INTO roles SET ?', {
+                title: newRole,
+                dept_id: roleID[0].id,
             });
-    });
+
+            console.log(chalk.cyan('Role added successfully'));
+            mainMenu();
+
+            // connection.query(
+            //     `SELECT id FROM departments WHERE name = '${newRoleDept}'`,
+            //     function (err, res) {
+            //         if (err) throw err;
+            //         connection.query(
+            //             'INSERT INTO roles SET ?',
+            //             {
+            //                 title: newRole,
+            //                 dept_id: res[0].id,
+            //             },
+            //             function (err, res) {
+            //                 if (err) throw err;
+            //                 console.log(chalk.cyan('Role added successfully'));
+            //                 mainMenu();
+            //             }
+            //         );
+            //     }
+            // );
+        });
 }
 
 //* -------------------------------
 // * Update functions
 //* -------------------------------
-// function updateRole() {}
+// function updateRole() {
+
+// }
 
 // function updateManager() {}
 
@@ -365,3 +473,37 @@ function addRole() {
 // function removeEmp() {}
 
 // function removeRoles() {}
+
+//* -------------------------------
+// * Helper functions
+//* -------------------------------
+const listManagers = async () => {
+    let managers;
+    managers = await query('SELECT * FROM employees');
+    const empName = managers.map((employee) => {
+        return `${employee.first_name} ${employee.last_name}`;
+    });
+    return empName;
+};
+
+function listDepts() {
+    let deptArr = [];
+    connection.query('SELECT * FROM departments', function (err, results) {
+        if (err) throw err;
+        for (var i = 0; i < results.length; i++) {
+            deptArr.push(results[i].name);
+        }
+    });
+    return deptArr;
+}
+
+function listTitles() {
+    let titleArr = [];
+    connection.query('SELECT * FROM roles', function (err, results) {
+        if (err) throw err;
+        for (var i = 0; i < results.length; i++) {
+            titleArr.push(results[i].title);
+        }
+    });
+    return titleArr;
+}

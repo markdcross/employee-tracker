@@ -26,6 +26,6 @@ CREATE TABLE employees (
     first_name VARCHAR(30),
     last_name VARCHAR(30),
     role_id INT NOT NULL REFERENCES roles(id),
-    manager_id INT NULL DEFAULT 0,
+    manager_id INT NULL REFERENCES employees(id),
     PRIMARY KEY (id)
 );
